@@ -13,3 +13,6 @@ airflow/airflow.cfg
 *.csv
 *.xlsx
 *.parquet
+
+airflow/service_account.json
+*.json
