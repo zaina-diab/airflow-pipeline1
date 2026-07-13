@@ -1,0 +1,15 @@
+.env
+config.yaml
+data/
+
+__pycache__/
+*.pyc
+
+logs/
+
+airflow/logs/
+airflow/airflow.cfg
+
+*.csv
+*.xlsx
+*.parquet

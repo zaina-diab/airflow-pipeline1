@@ -1,0 +1,181 @@
+version: "3.8"
+
+services:
+
+  postgres:
+    image: postgres:16
+
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+
+
+  metabase:
+    image: metabase/metabase:latest
+
+    depends_on:
+      - postgres
+
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: airflow
+      MB_DB_PASS: airflow
+      MB_DB_HOST: postgres
+
+    ports:
+      - "3000:3000"
+
+
+  airflow-init:
+    build: .
+
+    depends_on:
+      - postgres
+
+    environment:
+
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+
+      AIRFLOW_CONFIG_PATH: "/opt/airflow/config.yaml"
+
+      PYTHONPATH: "/opt/airflow"
+
+
+    command: >
+      bash -c "
+      airflow db migrate &&
+      airflow users create
+      --username admin
+      --password admin
+      --firstname Admin
+      --lastname User
+      --role Admin
+      --email admin@example.com
+      "
+
+
+    volumes:
+
+      - ./airflow/dags:/opt/airflow/dags
+
+      - ./airflow/logs:/opt/airflow/logs
+
+      - ./airflow/etl:/opt/airflow/etl
+
+      - ./config.yaml:/opt/airflow/config.yaml
+
+      - ./airflow/output:/opt/airflow/output
+
+      - ./data:/opt/airflow/data
+
+
+
+  airflow-webserver:
+
+    build: .
+
+    depends_on:
+
+      - postgres
+
+      - airflow-init
+
+
+    environment:
+
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+
+      AIRFLOW_CONFIG_PATH: "/opt/airflow/config.yaml"
+
+      PYTHONPATH: "/opt/airflow"
+
+
+    ports:
+
+      - "8080:8080"
+
+
+    command:
+
+      airflow webserver
+
+
+
+    volumes:
+
+      - ./airflow/dags:/opt/airflow/dags
+
+      - ./airflow/logs:/opt/airflow/logs
+
+      - ./airflow/etl:/opt/airflow/etl
+
+      - ./config.yaml:/opt/airflow/config.yaml
+
+      - ./airflow/output:/opt/airflow/output
+
+      - ./data:/opt/airflow/data
+
+
+
+
+  airflow-scheduler:
+
+    build: .
+
+    depends_on:
+
+      - postgres
+
+      - airflow-init
+
+
+    environment:
+
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+
+      AIRFLOW_CONFIG_PATH: "/opt/airflow/config.yaml"
+
+      PYTHONPATH: "/opt/airflow"
+
+
+
+    command:
+
+      airflow scheduler
+
+
+
+    volumes:
+
+      - ./airflow/dags:/opt/airflow/dags
+
+      - ./airflow/logs:/opt/airflow/logs
+
+      - ./airflow/etl:/opt/airflow/etl
+
+      - ./config.yaml:/opt/airflow/config.yaml
+
+      - ./airflow/output:/opt/airflow/output
+
+      - ./data:/opt/airflow/data
+
+
+
+volumes:
+
+  postgres-db-volume:

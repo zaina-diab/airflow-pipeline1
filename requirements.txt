@@ -1,0 +1,13 @@
+pandas
+pyarrow
+boto3
+PyYAML
+google-auth
+google-api-python-client
+requests
+openpyxl
+pytest
+gspread
+apache-airflow
+sqlalchemy
+psycopg2-binary
